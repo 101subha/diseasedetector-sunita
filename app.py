@@ -1,27 +1,31 @@
-from flask import Flask, request, jsonify
-import pickle
+from fastapi import FastAPI, Query
+from pydantic import BaseModel
+import joblib
 
-app = Flask(__name__)
+# Load model (update path if needed)
+model = joblib.load("disease_model.joblib")
 
-# Load your trained model
-model = pickle.load(open("model.pkl", "rb"))
+# FastAPI app
+app = FastAPI()
 
-# Root endpoint
-@app.route("/")
+# Input schema for JSON
+class SymptomsInput(BaseModel):
+    symptoms: list[str]
+
+@app.get("/")
 def home():
-    return jsonify({"message": "Disease Detector API is running!"})
+    return {"message": "Disease Detector API is running!"}
 
-# Prediction endpoint
-@app.route("/predict", methods=["POST"])
-def predict():
-    try:
-        data = request.get_json()
-        # Example: expecting input like {"features": [1, 2, 3, 4]}
-        features = data.get("features")
-        prediction = model.predict([features])
-        return jsonify({"prediction": prediction.tolist()})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
+# ✅ 1. POST endpoint (for Lovable, Postman, etc.)
+@app.post("/predict")
+def predict(input_data: SymptomsInput):
+    symptoms = input_data.symptoms
+    prediction = model.predict([symptoms])  # dummy example
+    return {"prediction": prediction[0]}
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+# ✅ 2. GET endpoint (for browser testing with query params)
+@app.get("/predict")
+def predict_query(symptoms: str = Query(..., description="Comma separated symptoms")):
+    symptoms_list = symptoms.split(",")
+    prediction = model.predict([symptoms_list])  # dummy example
+    return {"prediction": prediction[0]}
