@@ -1,31 +1,20 @@
-from fastapi import FastAPI, Query
-from pydantic import BaseModel
+from flask import Flask, request, jsonify
 import joblib
 
-# Load model (update path if needed)
+app = Flask(__name__)
+
+# load model
 model = joblib.load("disease_model.joblib")
 
-# FastAPI app
-app = FastAPI()
-
-# Input schema for JSON
-class SymptomsInput(BaseModel):
-    symptoms: list[str]
-
-@app.get("/")
+@app.route("/")
 def home():
-    return {"message": "Disease Detector API is running!"}
+    return "Disease Detector API is running!"
 
-# ✅ 1. POST endpoint (for Lovable, Postman, etc.)
-@app.post("/predict")
-def predict(input_data: SymptomsInput):
-    symptoms = input_data.symptoms
-    prediction = model.predict([symptoms])  # dummy example
-    return {"prediction": prediction[0]}
+@app.route("/predict", methods=["POST"])
+def predict():
+    data = request.get_json()
+    prediction = model.predict([data["features"]])
+    return jsonify({"prediction": int(prediction[0])})
 
-# ✅ 2. GET endpoint (for browser testing with query params)
-@app.get("/predict")
-def predict_query(symptoms: str = Query(..., description="Comma separated symptoms")):
-    symptoms_list = symptoms.split(",")
-    prediction = model.predict([symptoms_list])  # dummy example
-    return {"prediction": prediction[0]}
+if __name__ == "__main__":
+    app.run()
