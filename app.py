@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
@@ -10,15 +10,16 @@ def home():
 def predict():
     if request.method == 'POST':
         data = request.get_json() if request.is_json else request.form
-        features = data.get("features") or []
-        # Run your ML model here
-        result = "Positive" if sum(map(float, features)) > 2 else "Negative"
+        features = data.get("features")
+        if isinstance(features, str):
+            features = [float(x) for x in features.split(",")]
+        # Example model logic
+        result = "Positive" if sum(features) > 2 else "Negative"
         return jsonify({"prediction": result})
     else:
-        # Simple HTML form for browser testing
         return '''
             <form method="POST">
-                Features (comma separated): <input name="features">
+                Enter features (comma separated): <input name="features">
                 <input type="submit">
             </form>
         '''
