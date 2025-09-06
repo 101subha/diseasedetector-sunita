@@ -1,20 +1,24 @@
-from flask import Flask, request, jsonify
-import joblib
+from flask import Flask, request, jsonify, render_template
 
 app = Flask(__name__)
 
-# load model
-model = joblib.load("disease_model.joblib")
-
-@app.route("/")
+@app.route('/')
 def home():
     return "Disease Detector API is running!"
 
-@app.route("/predict", methods=["POST"])
+@app.route('/predict', methods=['GET', 'POST'])
 def predict():
-    data = request.get_json()
-    prediction = model.predict([data["features"]])
-    return jsonify({"prediction": int(prediction[0])})
-
-if __name__ == "__main__":
-    app.run()
+    if request.method == 'POST':
+        data = request.get_json() if request.is_json else request.form
+        features = data.get("features") or []
+        # Run your ML model here
+        result = "Positive" if sum(map(float, features)) > 2 else "Negative"
+        return jsonify({"prediction": result})
+    else:
+        # Simple HTML form for browser testing
+        return '''
+            <form method="POST">
+                Features (comma separated): <input name="features">
+                <input type="submit">
+            </form>
+        '''
