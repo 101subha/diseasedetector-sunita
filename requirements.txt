@@ -1,4 +1,6 @@
 flask
+fastapi
+uvicorn
 gunicorn
 scikit-learn
 pandas
